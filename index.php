@@ -40,7 +40,7 @@ function dump($var, $echo=true, $label=null, $strict=true) {
  * @param  $post
  * @return mixed
  */
-function postData($url, $post)
+function postJson($url, $post)
 {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -53,6 +53,33 @@ function postData($url, $post)
     $handles = curl_exec($ch);
     curl_close($ch);
     return $handles;
+}
+
+/**
+ * rsa-sha1 签名算法
+ * @param string $data 待签名数据
+ * @param string $privateKeyPath 私钥证书文件路径
+ * @return string
+ */
+function RSA_SHA1_Sign($data,$privateKeyPath){
+    $key = openssl_pkey_get_private(file_get_contents($privateKeyPath));
+    openssl_sign($data, $sign, $key, OPENSSL_ALGO_SHA1);
+    $sign = base64_encode($sign);
+    return $sign;
+}
+
+/**
+ * rsa-sha1 验签算法
+ * @param string $data 待签名数据
+ * @param string $sign 数据签名
+ * @param string $publicKeyPath 公钥证书文件路径
+ * @return boolean
+ */
+function RSA_SHA1_Verify($data, $sign,$publicKeyPath){
+    $sign = base64_decode($sign);
+    $key = openssl_pkey_get_public(file_get_contents($publicKeyPath));
+    $result = openssl_verify($data, $sign, $key, OPENSSL_ALGO_SHA1) === 1;
+    return $result;
 }
 
 /**
@@ -90,27 +117,92 @@ function getSerialNumberFromFile(){
     }
 }
 
+include 'Crypt3Des.php';
+
 $url = 'http://test.niiwoo.com:5102/boss/uap';
 
 $des3pwd = 'AD905@!QLF-D25WEDA5!@#$%';
 
-$header = array(
+$header_array = array(
         'orgCode' => '1003',
         'transNo' => getOrderId(),
-        'transDate' => date('Y-m-d H:i:s'),
+        'transDate' => date('YmdHis'),
         'userName' => 'tuandai',
-        'userPassword' => bin2hex(md5('tuandai_test123')),
-        'functionCode' => '10009101',
+        'userPassword' => strtolower(md5('tuandai_test123')),
+        'functionCode' => 'QDP_10009101',
     );
-$busiData = '';
-$signatureValue = '';
+$header_json = json_encode($header_array);
 
-$post_data = array(
-    'header' => $header,
-    'busiData' => $busiData,
-    'securityInfo' => $signatureValue
+$busiData_array = array(
+    'functionCode' => '10009101'
+);
+$busiData_json = json_encode($busiData_array);
+// dump($busiData_json);
+//3Des加密业务数据
+$crypt3Des = new Crypt3Des($des3pwd); 
+$busiData_json_3des = $crypt3Des->encrypt($busiData_json);
+// dump($busiData_json_3des);
+
+//对header进行签名
+$private_key_path = 'rsa_private_key_xd.pem';
+$key = openssl_pkey_get_private(file_get_contents($private_key_path));
+openssl_sign($header_json, $sign, $key, OPENSSL_ALGO_SHA1);
+$sign = base64_encode($sign);
+// dump($sign);
+
+$signatureValue_array = array(
+    'signatureValue' => $sign
+);
+$signatureValue_json = json_encode($signatureValue_array);
+
+$post_data_array = array(
+    'header' => $header_json,
+    'busiData' => $busiData_json_3des,
+    'securityInfo' => $signatureValue_json
 );
 
+// dump($post_data_array);
+$post_data_json = json_encode($post_data_array);
+// dump($post_data_json);
 
-dump($post_data);
+// $response_json = postJson($url,$post_data_json);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data_json);
+curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    'Content-Type:application/json;charset=utf-8',
+    'Content-Length:'.strlen($post_data_json))
+    );
+$response_json = curl_exec($ch);
+curl_close($ch);
+// echo $result;
+dump($response_json);
+
+$result_array = json_decode($response_json);
+dump($result_array);
+
+// $response_securityInfo = $result_array['securityInfo'];
+// // dump($response_securityInfo);
+
+// $response_sign_array = json_decode($response_securityInfo,true);
+// // dump($response_securityInfo);
+// $response_sign = $response_sign_array['signatureValue'];
+// // dump($response_sign);
+//对header进行验签
+// $public_key_path = 'rsa_public_key_xd.pem';
+// $key = openssl_pkey_get_public(file_get_contents($public_key_path));
+// if(openssl_verify($header_json, $response_sign, $key, OPENSSL_ALGO_SHA1) === 1){
+//     echo '验签通过';
+// }else {
+//     echo '验签不通过';
+// }
+
+// $response_busiData_3des = $result_array['busiData'];
+// //对3des加密过的json进行解密
+// // dump($response_busiData_3des);
+// $response_busiData_json = $crypt3Des->decrypt($response_busiData_3des);
+// // dump($response_busiData_json);
+// $response_busiData_array = json_decode($response_busiData_json,true);
+// // dump($response_busiData_array);
 
