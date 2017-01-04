@@ -20,7 +20,7 @@ $header_json = json_encode($header_array);
 
 $busiData_array = array(
     'functionCode' => '10009110',
-    'dentity_card' => '201682199107110822',
+    'identity_card' => '210682199107110822',
     'real_name' => '赵丽君',
     'address' => '东莞',
 );

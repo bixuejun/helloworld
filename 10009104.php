@@ -20,12 +20,12 @@ $header_json = json_encode($header_array);
 
 $busiData_array = array(
     'functionCode' => '10009104',
-    'idcard' => '201682199107110822',
-    'auth_code' => '2408',
+    'idcard' => '210682199107110822',
+    'auth_code' => '9105',
     'cb_url' => 'http://www.baidu.com',
     'login_features' =>array(
         'login_type' =>'0',
-        'user_name' =>'201682199107110822',
+        'user_name' =>'210682199107110822',
         'user_pass' =>'07110822',
         'real_name' =>'赵丽君',
     )

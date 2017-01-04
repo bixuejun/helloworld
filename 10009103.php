@@ -19,7 +19,7 @@ $header_json = json_encode($header_array);
 
 $busiData_array = array(
     'functionCode' => '10009103',
-    'idcard' => '201682199107110822',
+    'idcard' => '210682199107110822',
 );
 $busiData_json = json_encode($busiData_array);
 

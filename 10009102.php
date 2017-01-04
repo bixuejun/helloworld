@@ -21,7 +21,7 @@ $header_json = json_encode($header_array);
 $busiData_array = array(
     'functionCode' => '10009102',
     'she_bao_city' => '东莞',
-    'idcard' => '201682199107110822',
+    'idcard' => '210682199107110822',
     'name' => '赵丽君'
 );
 $busiData_json = json_encode($busiData_array);
