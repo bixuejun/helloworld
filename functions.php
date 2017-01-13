@@ -33,6 +33,15 @@ function dump($var, $echo=true, $label=null, $strict=true) {
         return $output;
 }
 
+/**
+ * 返回13位时间戳，精确到毫秒
+ * @return number
+ */
+function getMillisecond() {
+    list($t1, $t2) = explode(' ', microtime()); //空格分割microtime
+    return (float)sprintf('%.0f',(floatval($t1)+floatval($t2))*1000);
+}
+
 
 /**
  * 提交json
@@ -50,6 +59,29 @@ function postJson($url, $post)
     curl_setopt($ch, CURLOPT_TIMEOUT,50);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         'Content-Type:application/json;charset=utf-8',
+        'Content-Length:'.strlen($post))
+        );
+    $handles = curl_exec($ch);
+    curl_close($ch);
+    return $handles;
+}
+
+/**
+ * 提交普通form
+ * @param  $url
+ * @param  $post
+ * @return mixed
+ */
+function postForm($url, $post)
+{
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_TIMEOUT,60);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'Content-Type:application/x-www-form-urlencoded;charset=utf-8',
         'Content-Length:'.strlen($post))
         );
     $handles = curl_exec($ch);
